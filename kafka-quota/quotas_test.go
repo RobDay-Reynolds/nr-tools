@@ -36,32 +36,45 @@ var _ = Describe("Quotas", func() {
 		It("calculates by multiplying the current max throughput by the given multiplier", func() {
 			Expect(quotas).To(HaveLen(1))
 			Expect(quotas[0].ClientID).To(Equal("my-client"))
-			Expect(quotas[0].Quota).To(Equal(50))
+			Expect(quotas[0].Quota).To(Equal(30))
 		})
 
 		Context("when the clients have throughput above 1 kB/s but below 1 MB/s", func() {
 			BeforeEach(func() {
-				averageThroughput = 1200
-				maxThroughput = 1200
+				averageThroughput = 2400
+				maxThroughput = 2400
 			})
 
 			It("rounds up quotas to the next kB", func() {
 				Expect(quotas).To(HaveLen(1))
 				Expect(quotas[0].ClientID).To(Equal("my-client"))
-				Expect(quotas[0].Quota).To(Equal(6144))
+				Expect(quotas[0].Quota).To(Equal(8192))
 			})
 		})
 
 		Context("when the clients have throughput above 1 MB/s", func() {
 			BeforeEach(func() {
-				averageThroughput = 1200000
-				maxThroughput = 1200000
+				averageThroughput = 2400000
+				maxThroughput = 2400000
 			})
 
 			It("rounds up quotas to the next MB", func() {
 				Expect(quotas).To(HaveLen(1))
 				Expect(quotas[0].ClientID).To(Equal("my-client"))
-				Expect(quotas[0].Quota).To(Equal(6291456))
+				Expect(quotas[0].Quota).To(Equal(7340032))
+			})
+		})
+
+		Context("when the multiplier would return a value higher than 60 MB/s", func() {
+			BeforeEach(func() {
+				averageThroughput = 50000000
+				maxThroughput = 50000000
+			})
+
+			It("returns a quota of 60 MB/s", func() {
+				Expect(quotas).To(HaveLen(1))
+				Expect(quotas[0].ClientID).To(Equal("my-client"))
+				Expect(quotas[0].Quota).To(Equal(62914560))
 			})
 		})
 	})

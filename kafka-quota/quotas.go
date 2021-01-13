@@ -1,5 +1,7 @@
 package kafkaquota
 
+const QuotaLimit = 62914560
+
 type KafkaQuota struct {
 	ClientID string `json:"clientId"`
 	Quota    int    `json:"perBrokerProducerByteRate"`
@@ -22,7 +24,8 @@ func GenerateQuotasForClients(clients []KafkaClient, throughputMultiplier int) [
 			roundingMultiple = 1024
 		}
 
-		quota.Quota = roundToMultiple(client.MaxThroughput*5, roundingMultiple)
+		limit := roundToMultiple(client.MaxThroughput*3, roundingMultiple)
+		quota.Quota = numberOrCeiling(limit)
 
 		quotas = append(quotas, quota)
 	}
@@ -41,4 +44,12 @@ func roundToMultiple(numToRound, multiple int) int {
 	}
 
 	return numToRound + multiple - remainder
+}
+
+func numberOrCeiling(number int) int {
+	if number > QuotaLimit {
+		return QuotaLimit
+	}
+
+	return number
 }
