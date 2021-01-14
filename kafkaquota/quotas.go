@@ -3,6 +3,10 @@ package kafkaquota
 import "fmt"
 
 const QuotaLimit = 62914560
+const QuotasTemplate = `{{ range . }}
+  - clientId: {{ .ClientID }}
+    perBrokerProducerByteRate: {{ .Quota }} # {{ .HumanReadableQuota }}
+{{ end }}`
 
 type KafkaQuota struct {
 	ClientID           string `json:"clientId"`
@@ -39,7 +43,7 @@ func GenerateQuotasForClients(clients []KafkaClient, throughputMultiplier int) [
 
 		limit := roundToMultiple(clientThroughput*finalMultiplier, roundingMultiple)
 		quota.Quota = numberOrCeiling(limit)
-		quota.HumanReadableQuota = fmt.Sprintf("%d %sB/s", quota.Quota/roundingMultiple, ratePrefix)
+		quota.HumanReadableQuota = fmt.Sprintf("%d %sB/sec", quota.Quota/roundingMultiple, ratePrefix)
 
 		quotas = append(quotas, quota)
 	}

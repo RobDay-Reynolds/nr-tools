@@ -2,7 +2,6 @@ package kafkaquota
 
 import (
 	"log"
-	"os"
 
 	"github.com/newrelic/newrelic-client-go/pkg/config"
 	"github.com/newrelic/newrelic-client-go/pkg/nerdgraph"
@@ -14,11 +13,11 @@ type KafkaClient struct {
 	MaxThroughput     int
 }
 
-func GetAllClients() []KafkaClient {
+func GetAllClients(nrAPIKey string) []KafkaClient {
 	// Initialize the client configuration.  A Personal API key is required to
 	// communicate with the backend API.
 	cfg := config.New()
-	cfg.PersonalAPIKey = os.Getenv("NEW_RELIC_API_KEY")
+	cfg.PersonalAPIKey = nrAPIKey
 
 	// Initialize the client.
 	client := nerdgraph.New(cfg)
