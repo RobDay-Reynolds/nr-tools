@@ -1,7 +1,6 @@
 package kafkaquota
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -39,7 +38,7 @@ func GetAllClients() []KafkaClient {
 
 	variables := map[string]interface{}{
 		"accountId": 1,
-		"nrqlQuery": "SELECT average(produceByteRateSec), max(produceByteRateSec) FROM KafkaClientStats FACET clientId WHERE clientId LIKE 'producer.%' AND produceByteRateSec > 1048576 SINCE 2 WEEKS AGO",
+		"nrqlQuery": "SELECT average(produceByteRateSec), max(produceByteRateSec) FROM KafkaClientStats FACET clientId WHERE clientId LIKE 'producer.%' AND produceByteRateSec > 1048576 SINCE 2 WEEKS AGO LIMIT MAX",
 	}
 
 	resp, err := client.Query(query, variables)
@@ -59,13 +58,12 @@ func GetAllClients() []KafkaClient {
 		clients = append(
 			clients,
 			KafkaClient{
-				clientId:          data["clientId"].(string),
-				averageThroughput: data["average.produceByteRateSec"].(float64),
-				maxThroughput:     int(data["max.produceByteRateSec"].(float64)),
+				ID:                data["clientId"].(string),
+				AverageThroughput: data["average.produceByteRateSec"].(float64),
+				MaxThroughput:     int(data["max.produceByteRateSec"].(float64)),
 			},
 		)
 	}
 
-	// Output the raw time series values for transaction duration.
-	fmt.Printf(": %v\n", clients)
+	return clients
 }

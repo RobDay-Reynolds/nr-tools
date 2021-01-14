@@ -1,10 +1,13 @@
 package kafkaquota
 
+import "fmt"
+
 const QuotaLimit = 62914560
 
 type KafkaQuota struct {
-	ClientID string `json:"clientId"`
-	Quota    int    `json:"perBrokerProducerByteRate"`
+	ClientID           string `json:"clientId"`
+	Quota              int    `json:"perBrokerProducerByteRate"`
+	HumanReadableQuota string
 }
 
 func GenerateQuotasForClients(clients []KafkaClient, throughputMultiplier int) []KafkaQuota {
@@ -15,17 +18,28 @@ func GenerateQuotasForClients(clients []KafkaClient, throughputMultiplier int) [
 			ClientID: client.ID,
 		}
 
-		roundingMultiple := 0
+		roundingMultiple := 1
+		ratePrefix := ""
 
-		switch throughput := client.MaxThroughput; {
-		case throughput > 1048576:
-			roundingMultiple = 1048576
-		case throughput > 1024:
-			roundingMultiple = 1024
+		finalMultiplier := throughputMultiplier
+
+		clientThroughput := int(client.AverageThroughput)
+		if float64(client.MaxThroughput) > client.AverageThroughput*2 {
+			clientThroughput = client.MaxThroughput
+			finalMultiplier = throughputMultiplier / 2
 		}
 
-		limit := roundToMultiple(client.MaxThroughput*3, roundingMultiple)
+		if clientThroughput > 1048576 {
+			roundingMultiple = 1048576
+			ratePrefix = "M"
+		} else if clientThroughput > 1024 {
+			roundingMultiple = 1024
+			ratePrefix = "k"
+		}
+
+		limit := roundToMultiple(clientThroughput*finalMultiplier, roundingMultiple)
 		quota.Quota = numberOrCeiling(limit)
+		quota.HumanReadableQuota = fmt.Sprintf("%d %sB/s", quota.Quota/roundingMultiple, ratePrefix)
 
 		quotas = append(quotas, quota)
 	}
