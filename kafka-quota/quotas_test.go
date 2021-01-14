@@ -12,7 +12,7 @@ var _ = Describe("Quotas", func() {
 		var (
 			clients           []KafkaClient
 			quotas            []KafkaQuota
-			averageThroughput int
+			averageThroughput float64
 			maxThroughput     int
 		)
 
